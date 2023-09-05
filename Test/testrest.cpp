@@ -59,6 +59,10 @@ struct TrivialServer : public Server {
     (*this)(web::http::methods::POST,
             "resources/(.*)/",
             [this](web::http::http_request aReq) { handleCreateUpdate(aReq); });
+    (*this)(
+        web::http::methods::POST,
+        "text-resources/(.*)/",
+        [this](web::http::http_request aReq) { handleCreateUpdateText(aReq); });
     (*this)(web::http::methods::PUT,
             "resources/(.*)/",
             [this](web::http::http_request aReq) { handleCreateUpdate(aReq); });
@@ -98,6 +102,11 @@ struct TrivialServer : public Server {
     aReq.reply(web::http::status_codes::OK, myValue);
   }
 
+  void handleCreateUpdateText(web::http::http_request aReq) {
+    theTextResources[aReq.relative_uri().path()] = aReq.extract_string().get();
+    aReq.reply(web::http::status_codes::OK, "success");
+  }
+
   void handleDelete(web::http::http_request aReq) {
     theResources.erase(aReq.relative_uri().path());
     web::json::value myValue;
@@ -106,6 +115,7 @@ struct TrivialServer : public Server {
   }
 
   std::map<std::string, web::json::value> theResources;
+  std::map<std::string, std::string>      theTextResources;
 };
 
 struct AnswerServer : public Server {
@@ -192,6 +202,13 @@ TEST_F(TestRest, test_server_client_trivial) {
     ASSERT_EQ(web::http::status_codes::OK, myRet.first);
     ASSERT_TRUE(myRet.second.has_field("response"));
     ASSERT_EQ(42, myRet.second.as_object().at("response").as_integer());
+  }
+
+  // create a text resource
+  {
+    const auto myRet = myClient.post("hello", "text-resources/foo/?x=1&y=2");
+    ASSERT_EQ(web::http::status_codes::OK, myRet.first);
+    ASSERT_EQ("success", myRet.second);
   }
 
   // update a resource

@@ -69,6 +69,13 @@ Client::post(const web::json::value& aBody,
   return request(web::http::methods::POST, aPath, aQuery, aBody);
 }
 
+std::pair<web::http::status_code, std::string>
+Client::post(const std::string& aBody,
+             const std::string& aPath,
+             const std::string& aQuery) {
+  return request(web::http::methods::POST, aPath, aQuery, aBody);
+}
+
 std::pair<web::http::status_code, web::json::value>
 Client::put(const web::json::value& aBody,
             const std::string&      aPath,
@@ -126,6 +133,38 @@ Client::request(const web::http::method aMethod,
         return aResp.extract_json();
       })
       .then([&ret](pplx::task<web::json::value> aPrevTask) {
+        try {
+          ret.second = aPrevTask.get();
+        } catch (web::http::http_exception const& aErr) {
+          VLOG(1) << aErr.what();
+          throw;
+        }
+      })
+      .wait();
+
+  return ret;
+}
+
+std::pair<web::http::status_code, std::string>
+Client::request(const web::http::method aMethod,
+                const std::string&      aPath,
+                const std::string&      aQuery,
+                const std::string&      aBody) {
+  std::pair<web::http::status_code, std::string> ret;
+
+  // create the HTTP request
+  auto myRequest = createRequest(aMethod, aPath, aQuery);
+  myRequest.set_body(aBody);
+  VLOG(2) << "sending HTTP request:\n" << myRequest.to_string();
+
+  // send the request and wait for the response
+  theClient->request(myRequest)
+      .then([&ret](web::http::http_response aResp) {
+        VLOG(2) << "received:\n" << aResp.to_string();
+        ret.first = aResp.status_code();
+        return aResp.extract_string();
+      })
+      .then([&ret](pplx::task<std::string> aPrevTask) {
         try {
           ret.second = aPrevTask.get();
         } catch (web::http::http_exception const& aErr) {

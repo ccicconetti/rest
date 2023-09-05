@@ -63,24 +63,30 @@ class Client
   void changeHeader(const std::string& aName, const std::string& aValue);
 
   std::pair<web::http::status_code, web::json::value>
-  get(const std::string& aPath = std::string(), const std::string& aQuery = std::string());
+  get(const std::string& aPath  = std::string(),
+      const std::string& aQuery = std::string());
 
   std::pair<web::http::status_code, web::json::value>
   post(const web::json::value& aBody,
-       const std::string&      aPath = std::string(),
+       const std::string&      aPath  = std::string(),
        const std::string&      aQuery = std::string());
+
+  std::pair<web::http::status_code, std::string>
+  post(const std::string& aBody,
+       const std::string& aPath  = std::string(),
+       const std::string& aQuery = std::string());
 
   std::pair<web::http::status_code, web::json::value>
   put(const web::json::value& aBody,
-      const std::string&      aPath = std::string(),
+      const std::string&      aPath  = std::string(),
       const std::string&      aQuery = std::string());
 
   std::pair<web::http::status_code, web::json::value>
   patch(const web::json::value& aBody,
-        const std::string&      aPath = std::string(),
+        const std::string&      aPath  = std::string(),
         const std::string&      aQuery = std::string());
 
-  web::http::status_code del(const std::string& aPath = std::string(),
+  web::http::status_code del(const std::string& aPath  = std::string(),
                              const std::string& aQuery = std::string());
 
  private:
@@ -89,6 +95,12 @@ class Client
           const std::string&      aPath,
           const std::string&      aQuery,
           const web::json::value& aBody);
+
+  std::pair<web::http::status_code, std::string>
+  request(const web::http::method aMethod,
+          const std::string&      aPath,
+          const std::string&      aQuery,
+          const std::string&      aBody);
 
   web::http::status_code request(const web::http::method aMethod,
                                  const std::string&      aPath,
